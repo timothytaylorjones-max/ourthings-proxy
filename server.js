@@ -1,13 +1,12 @@
 const http = require("http");
 const https = require("https");
-const API_KEY = process.env.ANTHROPIC_API_KEY || "YOUR_API_KEY_HERE";
+const API_KEY = process.env.ANTHROPIC_API_KEY || "";
 const PORT = process.env.PORT || 3000;
 
 http.createServer(function(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Max-Age", "86400");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
     res.writeHead(204);
@@ -15,15 +14,11 @@ http.createServer(function(req, res) {
     return;
   }
 
-  if (req.method !== "POST" || req.url !== "/identify") {
-    res.writeHead(404);
-    res.end("Not found");
-    return;
-  }
-
   var body = "";
   req.on("data", function(chunk) { body += chunk; });
   req.on("end", function() {
+    if (!body) { res.writeHead(400); res.end("No body"); return; }
+    try { JSON.parse(body); } catch(e) { res.writeHead(400); res.end("Bad JSON"); return; }
     var options = {
       hostname: "api.anthropic.com",
       path: "/v1/messages",
@@ -51,5 +46,5 @@ http.createServer(function(req, res) {
     apiReq.end();
   });
 }).listen(PORT, function() {
-  console.log("OurThings proxy running on port " + PORT);
+  console.log("Proxy running on port " + PORT);
 });
